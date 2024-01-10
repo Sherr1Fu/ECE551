@@ -1,0 +1,13 @@
+#error
+printSsData sunspots_test.csv
+printFilteredSsData sunspots_test.csv 10
+printSsPeriod sunspots_test.csv 5
+printSsPeriod sunspots_test1.csv 5
+printSsPeriod sunspots_data.csv 10
+printSsPeriod sunspots_test0.csv 5
+
+#success
+printSsData sunspots_data.csv
+printFilteredSsData sunspots_data.csv 71
+printSsPeriod sunspots_data.csv 71
+

@@ -1,0 +1,268 @@
+#ifndef __STORY_STEP2__
+#define __STORY_STEP2__
+#include <assert.h>
+
+#include <cstdlib>
+#include <exception>
+#include <fstream>
+#include <iostream>
+#include <map>
+#include <sstream>
+#include <string>
+#include <vector>
+using namespace std;
+
+class option {
+ private:
+  size_t destpage;
+  string optiontext;
+
+ public:
+  option(size_t dest, string o) : destpage(dest), optiontext(o){};
+  string & getoption() { return optiontext; };
+  size_t getdest() const { return destpage; };
+};
+
+class page {
+ protected:
+  size_t number;
+  char type;
+  string text;
+  vector<option> options;
+
+ public:
+  ~page(){};
+  page(size_t n, char t, string & s) : number(n), type(t), text(s){};
+  size_t getnumber() const { return number; };
+  char gettype() const { return type; };
+  size_t getopnum() const { return options.size(); };
+  size_t selectoption(size_t i) const { return options[i].getdest(); };
+  void printpage() {
+    cout << text << endl;
+    if (type == 'N') {
+      cout << "What would you like to do?" << endl;
+      cout << endl;
+      printoptions();
+    }
+    else if (type == 'W') {
+      cout << "Congratulations! You have won. Hooray!" << endl;
+    }
+    else if (type == 'L') {
+      cout << "Sorry, you have lost. Better luck next time!" << endl;
+    }
+    else {
+      cerr << "page type is not valid" << endl;
+    }
+  };
+  void printoptions() {
+    for (size_t i = 0; i < options.size(); i++) {
+      cout << " " << (i + 1) << ". " << options[i].getoption() << endl;
+    }
+  };
+  void addoption(size_t dest, string & op) {
+    ////wait for adding Error handling
+    if (type != 'N') {
+      cerr << "Not allowed to add option to not N page" << endl;
+    }
+    ////Error handling
+    option newOption(dest, op);
+    options.push_back(newOption);
+  };
+};
+
+class story {
+ private:
+  vector<page> pages;
+  void parseline(string & s, string & path);
+  ssize_t existedpage(size_t num) {
+    for (size_t i = 0; i < pages.size(); i++) {
+      if (num == pages[i].getnumber()) {
+        return i;
+      }
+    }
+    return -1;
+  };
+  map<size_t, size_t> buildmap() {
+    map<size_t, size_t> pagesmap;
+    for (size_t i = 0; i < pages.size(); i++) {
+      pagesmap[pages[i].getnumber()] = i;
+    }
+    return pagesmap;
+  };
+
+ public:
+  ~story() {}
+  void playstory() {
+    map<size_t, size_t> pagesmap = buildmap();
+    size_t pagei = 0;
+    while (pages[pagei].gettype() == 'N') {
+      pages[pagei].printpage();
+      while (true) {
+        size_t choice;
+        cin >> choice;
+        if (!cin.good()) {
+          cin.clear();
+          cout << "That is not a valid choice, please try again" << endl;
+          continue;
+        }
+        if (choice <= 0 || choice > pages[pagei].getopnum()) {
+          cout << "That is not a valid choice, please try again" << endl;
+          continue;
+        }
+        pagei = pagesmap[pages[pagei].selectoption(choice - 1)];
+        break;
+      }
+    }
+    pages[pagei].printpage();
+    return;
+  }
+  int verifystory() {
+    size_t isW = 0;
+    size_t isL = 0;
+    map<size_t, size_t> pagemap;
+    vector<size_t> referpage;
+    for (size_t i = 0; i < pages.size(); i++) {
+      char type = pages[i].gettype();
+      size_t number = pages[i].getnumber();
+      //pagemap.push_back(number);         //pages I have
+      pagemap[number] = 0;
+      if (type == 'W') {
+        isW++;
+      }
+      else if (type == 'L') {
+        isL++;
+      }
+      else if (type == 'N') {
+        for (size_t j = 0; j < pages[i].getopnum(); j++) {
+          referpage.push_back(pages[i].selectoption(j));  //pages I referenced
+        }
+      }
+    }
+    if (isW == 0 || isL == 0) {  //no Wpage or Lpage
+      return EXIT_FAILURE;
+    }
+    for (size_t i = 0; i < referpage.size(); i++) {
+      map<size_t, size_t>::iterator it = pagemap.find(referpage[i]);
+      //pagemap.find(referpage[i]);
+      if (it == pagemap.end()) {
+        return EXIT_FAILURE;
+      }
+      else {
+        it->second++;
+      }
+    }
+    map<size_t, size_t>::iterator it;
+    for (it = pagemap.begin(); it != pagemap.end(); it++) {
+      if (it->second == 0 && it->first != 0) {
+        return EXIT_FAILURE;
+      }
+    }
+    return EXIT_SUCCESS;
+  };
+  int readstory(const char * filename) {
+    ifstream infile(filename);
+    string s;
+    if (!infile.is_open()) {
+      cerr << "Unable to open file:" << filename << endl;
+      return EXIT_FAILURE;
+    }
+    string path(filename);
+    while (getline(infile, s)) {
+      //cout << s << endl;  /////
+      if (s.empty()) {
+        continue;
+      }
+      parseline(s, path);
+    }
+    infile.close();
+    return EXIT_SUCCESS;
+  };
+  void printstory() {
+    for (size_t i = 0; i < pages.size(); i++) {
+      cout << "Page " << pages[i].getnumber() << endl;
+      cout << "==========" << endl;
+      pages[i].printpage();
+    }
+  };
+};
+
+string readfile(const char * filename) {
+  ifstream infile(filename);
+  //infile.open(filename);
+  if (!infile.is_open()) {
+    throw std::runtime_error("Unable to open file.");
+    //cerr << "Unable to open file:" << filename << endl;
+    //return "";
+  }
+  stringstream filetext;
+  char ch;
+  while (infile.get(ch)) {
+    filetext.put(ch);
+  }
+  infile.close();
+  return filetext.str();
+}
+
+string replaceFileName(const string & filePath, const string & newFileName) {
+  size_t lastSlashPos = filePath.find_last_of('/');
+  if (lastSlashPos != string::npos) {
+    return filePath.substr(0, lastSlashPos + 1) + newFileName;
+  }
+  else {
+    return newFileName;
+  }
+}
+void story::parseline(string & s, string & path) {
+  //page or choice
+  istringstream line(s);
+  size_t number, destpage;
+  char at, type, colon;
+  string filename, text;
+  string pagefilename;
+  string remaining;
+  line >> number >> at >> type >> colon >> filename;
+  //page  0@N:page0.txt
+  //ifpage
+  if (at == '@' && (type == 'N' || type == 'W' || type == 'L') && colon == ':') {
+    line >> remaining;
+    if (!remaining.empty()) {
+      throw std::runtime_error("Input format is not valid");
+    }
+    pagefilename = replaceFileName(path, filename);
+    text = readfile(pagefilename.c_str());
+    page Newpage(number, type, text);
+    if (existedpage(number) == -1) {
+      pages.push_back(Newpage);
+      //  cout << "addpage successfully" << endl;
+    }
+    else {
+      //throw"two page have the same number";
+      throw std::runtime_error("Two page have the same number");
+      //cerr << "two page have the same number" << endl;
+    }
+    return;
+  }
+  istringstream line2(s);
+  line2 >> number >> at >> destpage >> colon;
+  //ifchoice 0:1:Give the dragon a cookie.
+  getline(line2, text);
+  if (at == ':' && colon == ':') {
+    ssize_t index = existedpage(number);
+    if (index >= 0) {
+      if (pages[index].gettype() == 'N') {
+        pages[index].addoption(destpage, text);
+        //cout << text << endl;
+        //cout << "addoption successfully" << endl;
+        return;
+      }
+      else {
+        throw std::runtime_error("Adding option to not Npage");
+      }
+    }
+    throw std::runtime_error("Page is not existed");
+    //cerr << "page " << number << " is not existed" << endl;
+  }
+  throw std::runtime_error("Input format is not valid");
+}
+
+#endif

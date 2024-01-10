@@ -1,0 +1,19 @@
+#include "cyoa-step1.hpp"
+
+#include <stdio.h>
+
+#include <iostream>
+
+int main(int argc, char ** argv) {
+  if (argc != 2) {
+    std::cerr << "Usage: ./cyoa-step1 storyfile\n";
+    return EXIT_FAILURE;
+  }
+  //story mystory;
+  //mystory.readstory(argv[1]);
+  //mystory.printstory();
+  string str;
+  str = readfile(argv[1]);
+  std::cout << str;
+  return EXIT_SUCCESS;
+}

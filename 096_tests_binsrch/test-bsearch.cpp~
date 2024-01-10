@@ -1,0 +1,51 @@
+#include <cstdlib>
+#include <iostream>
+
+#include "function.h"
+
+class CountedIntFn : public Function<int, int> {
+ protected:
+  unsigned remaining;
+  Function<int, int> * f;
+  const char * mesg;
+
+ public:
+  CountedIntFn(unsigned n, Function<int, int> * fn, const char * m) :
+      remaining(n), f(fn), mesg(m) {}
+  virtual int invoke(int arg) {
+    if (remaining == 0) {
+      fprintf(stderr, "Too many function invocations in %s\n", mesg);
+      exit(EXIT_FAILURE);
+    }
+    remaining--;
+    return f->invoke(arg);
+  }
+};
+
+void check(Function<int, int> * f,
+           int low,
+           int high,
+           int expected_ans,
+           const char * mesg) {
+  // Compute the maximum number of invocations of f
+  unsigned max_invocations = ...;  // You need to compute this based on the logic provided
+
+  // Wrap f in a CountedIntFn
+  CountedIntFn countFn(max_invocations, f, mesg);
+
+  // Perform the binary search
+  int result = binarySearch(countFn, low, high);
+
+  // Check the answer
+  if (result != expected_ans) {
+    std::cerr << mesg << " failed: Expected " << expected_ans << ", got " << result
+              << std::endl;
+    exit(EXIT_FAILURE);
+  }
+}
+
+int main() {
+  CountedIntFn exampleFn(3, &someFunction, "Example Test");
+  check(&exampleFn, 0, 10, 5, "Example Test");
+  return 0;
+}

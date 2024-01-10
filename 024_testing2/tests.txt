@@ -1,0 +1,20 @@
+aaaaa aaaaa
+aaaaa bbbbb
+aaaaa aaaab
+aaaaa bbbcc
+aaaab bbbbc
+aaabc bbabc
+aaabb bbbcc
+aabbb bbccc
+aabbb cccbb
+      bbbbb
+aaabb bbbbc
+$$    bb c%
+!!!!! aaaaa
+aabbc ababc
+abcde abcde
+'' ;
+aaaaa aaaa  
+aabcd ababaa
+aaaaaaaaaaa bb
+aaAbb AAABB

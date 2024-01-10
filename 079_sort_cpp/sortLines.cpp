@@ -1,0 +1,46 @@
+#include <algorithm>
+#include <fstream>
+#include <iostream>
+#include <vector>
+
+int main(int argc, char * argv[]) {
+  std::vector<std::string> lines;
+
+  if (argc == 1) {
+    std::string line;
+    while (std::getline(std::cin, line)) {
+      lines.push_back(line);
+    }
+    std::sort(lines.begin(), lines.end());
+    std::vector<std::string>::const_iterator it = lines.begin();
+    while (it != lines.end()) {
+      std::cout << *it << std::endl;
+      ++it;
+    }
+  }
+  else {
+    for (int i = 1; i < argc; ++i) {
+      std::ifstream file(argv[i]);
+      if (!file.is_open()) {
+        std::cerr << "Cannot open file: " << argv[i] << std::endl;
+        return EXIT_FAILURE;
+      }
+
+      std::string line;
+      while (std::getline(file, line)) {
+        lines.push_back(line);
+      }
+
+      file.close();
+      std::sort(lines.begin(), lines.end());
+      std::vector<std::string>::const_iterator it = lines.begin();
+      while (it != lines.end()) {
+        std::cout << *it << std::endl;
+        ++it;
+      }
+      lines.clear();
+    }
+  }
+
+  return EXIT_SUCCESS;
+}

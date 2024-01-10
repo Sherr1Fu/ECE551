@@ -1,0 +1,6 @@
+test-power: test-power.c
+	gcc -o test-power -pedantic -std=gnu99 -Wall -Werror test-power.c
+power: power.c
+	gcc -o power -pedantic -std=gnu99 -Wall -Werror power.c
+program: test-power.o power.o
+	gcc -o program test-power.o power.o

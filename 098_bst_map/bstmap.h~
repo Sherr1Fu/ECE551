@@ -1,0 +1,59 @@
+#include <cstdio>
+#include <cstdlib>
+#include <exception>
+#include <iostream>
+#include <stdexcept>
+
+#include "map.h"
+template<typename K, typename V>
+class BstMap : public Map<K, V> {
+ private:
+  class Node {
+   public:
+    K key;
+    V value;
+    Node * left;
+    Node * right;
+    Node() : key(0), value(0), left(NULL), right(NULL){};
+    Node(const K & k, const V & v) : key(k), value(v), left(NULL), right(NULL){};
+  };
+  Node * root;
+  void addhelper(Node *& current, const K & key, const V & value) {
+    if (current == NULL) {
+      current = new Node(key, value);
+    }
+    else if (key < current->key) {
+      addhelper(current->left, key, value);
+    }
+    else if (key > current->key) {
+      addhelper(current->right, key, value);
+    }
+    else {
+      current->value = value;
+    }
+  }
+  V & lookuphelper(Node * current, const K & key) const {
+    if (current == NULL) {
+      throw std::invalid_argument("Key is not found");
+    }
+
+    if (key == current->key) {
+      return current->value;
+    }
+    else if (key < current->key) {
+      return lookuphelper(current->left, key);
+    }
+    else {
+      return lookuphelper(current->right, key);
+    }
+  }
+
+ public:
+  BstMap() : root(NULL){};
+  BstMap(const BstMap & rhs);
+  BstMap & operator=(const BstMap & rhs);
+  virtual ~BstMap();
+  virtual void add(const K & key, const V & value) { addhelper(root, key, value); };
+  virtual const V & lookup(const K & key) const throw(std::invalid_argument);
+  virtual void remove(const K & key);
+};

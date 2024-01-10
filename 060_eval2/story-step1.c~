@@ -1,0 +1,56 @@
+#include <stdio.h>
+
+#include "rand_story.h"
+
+int main(int argc, char ** argv) {
+  FILE * stream;
+  char * line = NULL;
+  size_t len = 0;
+  ssize_t read;
+  size_t count = 0;
+  //char ** lines = NULL;
+
+  if (argc != 2) {
+    perror("Wrong input format");
+    exit(EXIT_FAILURE);
+  }
+  else {  //open file
+    stream = fopen(argv[1], "r");
+    if (stream == NULL) {
+      perror("input file open failed");
+      exit(EXIT_FAILURE);
+    }  //read lines
+    while ((read = getline(&line, &len, stream)) != -1) {
+      count = 0;  //calculate the number of '_'
+      for (int i = 0; i < len - 2; i++) {
+        if (count % 2 == 0) {  //even number of '_'
+          if (line[i] != '_') {
+            printf("%c", line[i]);
+          }
+          else {
+            count++;
+          }
+        }
+        else {  //odd number of '_', the following is in the blank
+          if (line[i] == '_') {
+            count++;
+            const char * cat = chooseWord("verb", NULL);
+            printf("%s", cat);
+          }
+        }
+      }
+      printf("\n");
+      if (count % 2 != 0) {  //odd number of '_' in one line
+        free(line);
+        perror("Unmatching underscore!");
+        return EXIT_FAILURE;
+      }
+    }
+    free(line);
+    if (fclose(stream) != 0) {  //close file
+      perror("Failed to close the input file!");
+      return EXIT_FAILURE;
+    }
+  }
+  return EXIT_SUCCESS;
+}

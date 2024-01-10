@@ -1,0 +1,147 @@
+#include "rand_story.h"
+int main(int argc, char ** argv) {
+  int n = 1;  //-n n=0 activate
+  char * words = NULL;
+  char * story = NULL;
+  //parse command
+  if (argc != 3 && argc != 4) {
+    perror("Wrong input format");
+    return EXIT_FAILURE;
+  }
+  if (argc == 4) {
+    n = strcmp(argv[1], "-n");
+    if (n != 0) {
+      perror("Wrong input format: 4 input");
+      return EXIT_FAILURE;
+    }
+    words = argv[2];
+    story = argv[3];
+  }
+  else {
+    words = argv[1];
+    story = argv[2];
+  }
+  printf("words:%s\n", words);
+  printf("story:%s\n", story);
+  printf("n:%d\n", n);
+
+  FILE * stream = NULL;
+  char * line = NULL;
+  size_t len = 0;
+  ssize_t read;
+  catarray_t * cats = NULL;
+  //int str = 0;
+  category_t * used = NULL;
+  size_t count = 0;
+
+  //read words
+  stream = openfile(stream, words);
+  cats = initcats(cats);
+  cats = readwords(cats, stream);
+  if (cats == NULL) {
+    perror("something get wrong when reading file");
+    freecats(cats);
+    return EXIT_FAILURE;
+  }
+  closefile(stream);
+  //printWords(cats);  //test
+
+  //write story
+  stream = openfile(stream, story);
+  used = malloc(sizeof(*used));
+  used->n_words = 0;
+  used->name = "used";
+  used->words = NULL;
+
+  //char * name = NULL;
+  category_t * findcat = NULL;
+  int wordstart = 0;
+  int wordcount = 0;
+  while ((read = getline(&line, &len, stream)) != -1) {
+    count = 0;  //calculate the number of '_'
+    for (int i = 0; line[i] != '\n'; i++) {
+      if (count % 2 == 0) {  //even number of '_'
+        if (line[i] != '_') {
+          printf("%c", line[i]);
+        }
+        else {
+          count++;
+          wordstart = i + 1;
+          wordcount = 0;
+        }
+      }
+      else {  //odd number of '_', the following is in the blank
+        if (line[i] == '_') {
+          count++;
+          if (wordcount == 0) {
+            perror("story blank format is wrong");
+            free(line);
+            freecat(used);
+            freecats(cats);
+            return EXIT_FAILURE;
+          }
+          char * name = malloc((wordcount + 1) * sizeof(*name));
+          strncpy(name, line + wordstart, wordcount);
+          name[wordcount] = '\0';
+          int integer = ifint(name);
+          //printf("\n%s,%d", name, integer);
+          //printf("\n%zu", used->n_words);
+          if (integer > 0 && integer <= used->n_words) {  //read from used
+            free(name);
+            name = used->words[used->n_words - integer];
+            used = addnewname(used, name);
+            printf("%s", name);
+            name = NULL;
+          }
+          else if (integer > used->n_words) {
+            perror("the number of previous used word is not enough\n");
+            free(line);
+            free(name);
+            freecat(used);
+            freecats(cats);
+            return EXIT_FAILURE;
+          }
+          else {  //read from cats
+            findcat = findcats(name, cats);
+            if (findcat == NULL) {
+              perror("can't find category in cats");
+              free(line);
+              free(name);
+              freecat(used);
+              freecats(cats);
+              return EXIT_FAILURE;
+            }
+            const char * cat = chooseWord(name, cats);
+            char * cat2 = malloc((strlen(cat) + 1) * sizeof(*cat2));
+            strcpy(cat2, cat);
+            used = addnewname(used, cat2);
+
+            printf("%s", cat);
+            if (n == 0) {
+              deletename(cats, findcat, cat2);
+            }
+            free(cat2);
+            free(name);
+          }
+        }
+        else {
+          wordcount++;
+        }
+      }
+    }
+    printf("\n");
+    if (count % 2 != 0) {  //odd number of '_' in one line
+      free(line);
+      freecat(used);
+      freecats(cats);
+      perror("Unmatching underscore!");
+      return EXIT_FAILURE;
+    }
+  }
+  free(line);
+  closefile(stream);
+  freecats(cats);
+  freecat(used);
+  return EXIT_SUCCESS;
+  return EXIT_SUCCESS;
+}

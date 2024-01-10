@@ -1,0 +1,94 @@
+#include "rand_story.h"
+
+catarray_t * initcats(catarray_t * cats) {
+  cats = malloc(sizeof(*cats));
+  cats->arr = NULL;
+  cats->n = 0;
+  return cats;
+}
+category_t * findcats(char * category, catarray_t * cats) {
+  int i;
+  for (i = 0; i < cats->n; i++) {
+    if (strcmp(cats->arr[i].name, category) == 0) {
+      return cats->arr + i;
+    }
+  }
+  return NULL;
+}
+catarray_t * addnewcat(catarray_t * cats, char * name) {
+  cats->n++;
+  cats->arr = realloc(cats->arr, cats->n * sizeof(*cats->arr));
+  if (cats->arr == NULL) {
+    perror("failed to realloc space for cats->arr");
+    free(cats);
+    exit(EXIT_FAILURE);
+  }
+}
+
+int ParseLine(char * string) {
+  int i;
+  int count = 0;  //count for ':'
+  int str = 0;
+  for (i = 0; string[i] != '\n'; i++) {
+    if (string[i] == ':') {
+      count++;
+      if (count == 1) {
+        str = i + 1;
+      }
+      else {
+        return -1;
+      }
+    }
+  }
+  if (count == 0) {
+    return -1;
+  }
+  if (str < 2) {
+    return -1;
+  }
+  return str;
+}
+int main(int argc, char ** argv) {
+  FILE * stream = NULL;
+  char * line = NULL;
+  size_t len = 0;
+  ssize_t read;
+  //size_t count = 0;
+  catarray_t * cats = NULL;
+  //char ** lines = NULL;
+  int str = 0;
+  category_t * cat = NULL;
+
+  if (argc != 2) {
+    perror("Wrong input format");
+    exit(EXIT_FAILURE);
+  }
+  else {  //open file
+    cats = initcats(cats);
+    stream = openfile(stream, argv[1]);
+    //read lines
+    while ((read = getline(&line, &len, stream)) >= 0) {
+      str = ParseLine(line);  //return the index of the name
+      if (str == -1) {
+        perror("invalid input format");
+        freecats(cats);
+        free(line);
+        return EXIT_FAILURE;
+      }
+      char name[str];
+      strncpy(name, line, str - 1);
+      name[str] = '\0';
+      cat = findcats(name, cats);  //find the str to category_t
+      //new cat
+      if (cat == NULL) {
+        cat = addnewcat(cats, name);
+      }
+      //old cat
+      else {
+      }
+    }
+    free(line);
+    closefile(stream);
+  }
+  return EXIT_SUCCESS;
+}
